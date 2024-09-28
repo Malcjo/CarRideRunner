@@ -39,6 +39,9 @@ public class PlayerController : MonoBehaviour
     public float jumpBufferTime = 0.1f;  // Allow buffering the jump input slightly before landing
     private float jumpBufferCounter;
 
+    // Fall velocity threshold for triggering the camera shake
+    public float fallVelocityThreshold = -8f;  // Minimum falling speed to trigger camera shake
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -138,8 +141,12 @@ public class PlayerController : MonoBehaviour
             // Trigger the shake when the player lands after falling
             if (!wasGrounded && isGrounded && rb.velocity.y <= 0)
             {
-                // Player has just landed after a fall
-                cameraShake.LightVerticalShake();  // Call your shake method for landing
+                // Check if the player was falling fast enough to warrant a camera shake
+                if (rb.velocity.y <= fallVelocityThreshold)
+                {
+                    // Player has landed after falling fast enough
+                    cameraShake.LightVerticalShake();  // Call your shake method for landing
+                }
             }
 
             // Track whether the player was grounded in the last frame
