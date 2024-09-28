@@ -19,7 +19,7 @@ public class LevelGenerator : MonoBehaviour
     public void startSpawning()
     {
         startRandomSpawn = true;
-        nextSpawnX = player.position.x + (platformLength /2);  // Set spawn position after the custom section
+        nextSpawnX = player.position.x + (platformLength / 2);  // Set spawn position after the custom section
     }
     void Update()
     {
