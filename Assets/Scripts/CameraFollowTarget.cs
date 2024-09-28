@@ -17,6 +17,8 @@ public class CameraFollowTarget : MonoBehaviour
     public float longJumpThreshold = 0.5f;  // Time in air considered a "long jump"
     public float maxSpeed = 20f;  // Maximum player speed to normalize zoom
 
+    public float minYPosition = 0f;  // Minimum Y position the camera can move to
+
     private float timeInAir = 0f;  // Track how long the player is in the air
     private bool isGrounded = true;  // Track if the player is grounded (simplified)
 
@@ -34,7 +36,12 @@ public class CameraFollowTarget : MonoBehaviour
         {
             // Smoothly move the camera to the target position using SmoothDamp
             Vector3 desiredPosition = cameraTarget.position + offset;
-            Vector3 smoothedPosition = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothSpeed);
+
+            // Clamp the Y position to avoid moving below the specified minimum Y position
+            float clampedYPosition = Mathf.Max(desiredPosition.y, minYPosition);
+
+            // Apply the clamped Y position to the desired position
+            Vector3 smoothedPosition = Vector3.SmoothDamp(transform.position, new Vector3(desiredPosition.x, clampedYPosition, desiredPosition.z), ref velocity, smoothSpeed);
 
             // Apply the shake offset to the smoothed follow position
             transform.position = smoothedPosition + shakeOffset;
