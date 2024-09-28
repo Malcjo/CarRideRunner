@@ -6,6 +6,8 @@ public class CameraTargetFollow : MonoBehaviour
     public float minFollowSpeed = 0.05f;  // Minimal smoothing time for slow movement
     public float maxFollowSpeed = 0.3f;   // Maximum smoothing time for fast movement or jumping
     public Vector3 offset = new Vector3(0, 2, -10);  // Offset of the camera target relative to the player
+    public float verticalDelay = 1.2f;
+    public float HorizontalDelay = 5f;
 
     private Vector3 velocity = Vector3.zero;  // Reference for smooth damping
     private Rigidbody playerRb;  // To get the player's speed
@@ -31,12 +33,12 @@ public class CameraTargetFollow : MonoBehaviour
         if (Mathf.Abs(playerVerticalSpeed) > 0.1f)  // If player is jumping or falling
         {
             // Increase the follow delay when the player is jumping or falling
-            currentFollowSpeed = Mathf.Lerp(currentFollowSpeed, maxFollowSpeed, Time.deltaTime * 5f);
+            currentFollowSpeed = Mathf.Lerp(currentFollowSpeed, maxFollowSpeed, Time.deltaTime * verticalDelay);
         }
         else
         {
             // Smoothly reduce the follow delay back to the minimal value when the player is on the ground
-            currentFollowSpeed = Mathf.Lerp(currentFollowSpeed, minFollowSpeed, Time.deltaTime * 5f);
+            currentFollowSpeed = Mathf.Lerp(currentFollowSpeed, minFollowSpeed, Time.deltaTime * HorizontalDelay);
         }
 
         // Smoothly move the CameraTarget towards the target position

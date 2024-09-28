@@ -25,6 +25,7 @@ public class PlayerController : MonoBehaviour
     public bool isAlive = true;
 
     private bool isJumping = false;  // Track if the player is currently jumping
+    private bool wasGrounded = true; // Track whether the player was grounded last frame
     private float jumpTimeCounter;   // Tracks how long the player has been holding the jump button
 
     // Coyote time and jump buffer variables
@@ -37,13 +38,12 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         cameraShake = cam.GetComponent<CameraShake>();
-        
         isAlive = true;
     }
 
     void Update()
     {
-        if(isAlive)
+        if (isAlive)
         {
             // Update coyote time
             if (isGrounded)
@@ -95,7 +95,6 @@ public class PlayerController : MonoBehaviour
                 isJumping = false;  // Stop extending the jump when button is released
             }
         }
-        
     }
 
     private void FixedUpdate()
@@ -108,8 +107,6 @@ public class PlayerController : MonoBehaviour
             // Ground detection
             isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundCheckRadius, groundLayer);
 
-
-
             // Apply custom gravity when falling
             if (rb.velocity.y < 0)  // Player is falling
             {
@@ -119,8 +116,17 @@ public class PlayerController : MonoBehaviour
             {
                 rb.velocity += Vector3.up * Physics.gravity.y * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
             }
-        }
 
+            // Trigger the shake when the player lands after falling
+            if (!wasGrounded && isGrounded && rb.velocity.y <= 0)
+            {
+                // Player has just landed after a fall
+                cameraShake.LightVerticalShake();  // Call your shake method for landing
+            }
+
+            // Track whether the player was grounded in the last frame
+            wasGrounded = isGrounded;
+        }
     }
 
     // Handle collisions with obstacles
@@ -134,16 +140,15 @@ public class PlayerController : MonoBehaviour
     }
 
     // Coroutine to shake the camera, destroy the player, and restart the game
-    
     private IEnumerator HandlePlayerHitObstacle()
     {
+        isAlive = false;
+        yield return new WaitForSeconds(0.25f);
         // Step 1: Shake the camera
-        cameraShake.HitShake(0.5f, 0.05f);  // Full shake for obstacle collision
-
+        cameraShake.LightHitShake();  // Full shake for obstacle collision
 
         // Step 3: Destroy the player
         Destroy(playerVisual);  // Destroy the player object
-        isAlive = false;
 
         // Step 4: Pause again for 1 second before restarting
         yield return new WaitForSeconds(2f);

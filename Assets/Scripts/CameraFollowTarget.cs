@@ -20,24 +20,34 @@ public class CameraFollowTarget : MonoBehaviour
     private float timeInAir = 0f;  // Track how long the player is in the air
     private bool isGrounded = true;  // Track if the player is grounded (simplified)
 
+    private Vector3 shakeOffset = Vector3.zero;  // Offset for camera shake
+
     private void Start()
     {
         cam = Camera.main;
         playerRb = player.GetComponent<Rigidbody>();
-
     }
 
     private void FixedUpdate()
     {
-        if(player.GetComponent<PlayerController>().isAlive == true)
+        if (player.GetComponent<PlayerController>().isAlive == true)
         {
             // Smoothly move the camera to the target position using SmoothDamp
             Vector3 desiredPosition = cameraTarget.position + offset;
-            transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothSpeed);
+            Vector3 smoothedPosition = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothSpeed);
+
+            // Apply the shake offset to the smoothed follow position
+            transform.position = smoothedPosition + shakeOffset;
 
             // Update zoom based on player speed and jumping
             AdjustZoom();
         }
+    }
+
+    // Method to receive shake offset from the CameraShake script
+    public void SetShakeOffset(Vector3 offset)
+    {
+        shakeOffset = offset;
     }
 
     void AdjustZoom()
