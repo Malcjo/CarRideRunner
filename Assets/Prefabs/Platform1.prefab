@@ -106,6 +106,18 @@ PrefabInstance:
       propertyPath: m_Material
       value: 
       objectReference: {fileID: 13400000, guid: 4b516ce4366eee344a1751b0164bb345, type: 2}
+    - target: {fileID: 6666950690071927530, guid: 7587d7c386aee644e83f479e7daeb23d, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 6666950690071927530, guid: 7587d7c386aee644e83f479e7daeb23d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 9.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 6666950690071927530, guid: 7587d7c386aee644e83f479e7daeb23d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -5.75
+      objectReference: {fileID: 0}
     - target: {fileID: 8596574565343111769, guid: 7587d7c386aee644e83f479e7daeb23d, type: 3}
       propertyPath: m_Layer
       value: 6

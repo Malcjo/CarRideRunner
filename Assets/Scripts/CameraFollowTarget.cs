@@ -22,25 +22,56 @@ public class CameraFollowTarget : MonoBehaviour
 
     private Vector3 shakeOffset = Vector3.zero;  // Offset for camera shake
 
+    // Toggles for controlling behavior
+    public bool enableDynamicZoom = true;  // Toggle to enable/disable dynamic zoom and follow
+    public bool enableRotationInsteadOfZoom = false;  // Toggle to enable rotation instead of zoom and follow
+
+    public float rotationSpeed = 50f;  // Speed at which the camera rotates around the player
+    public float verticalRotationLimit = 80f;  // Limit the vertical rotation to prevent the camera from flipping
+
+
+    // Variables for camera rotation
+    public float horizontalRotationSpeed = 100f;  // Speed of horizontal rotation
+    public float verticalRotationSpeed = 50f;     // Speed of vertical rotation
+    private float horizontalRotation = 0f;        // Track horizontal rotation
+    private float verticalRotation = 0f;          // Track vertical rotation (up and down)
+
+
     private void Start()
     {
         cam = Camera.main;
         playerRb = player.GetComponent<Rigidbody>();
+
+        // Initialize rotation values to the current camera angles
+        horizontalRotation = transform.eulerAngles.y;
+        verticalRotation = transform.eulerAngles.x;
     }
 
     private void FixedUpdate()
     {
         if (player.GetComponent<PlayerController>().isAlive == true)
         {
-            // Smoothly move the camera to the target position using SmoothDamp
-            Vector3 desiredPosition = cameraTarget.position + offset;
-            Vector3 smoothedPosition = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothSpeed);
+            if (enableRotationInsteadOfZoom)
+            {
+                // Rotate around the player and look at them
+                RotateAndLookAtPlayer();
+            }
+            else
+            {
+                // If dynamic zoom and follow are enabled, proceed with normal behavior
+                if (enableDynamicZoom)
+                {
+                    // Smoothly move the camera to the target position using SmoothDamp
+                    Vector3 desiredPosition = cameraTarget.position + offset;
+                    Vector3 smoothedPosition = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothSpeed);
 
-            // Apply the shake offset to the smoothed follow position
-            transform.position = smoothedPosition + shakeOffset;
+                    // Apply the shake offset to the smoothed follow position
+                    transform.position = smoothedPosition + shakeOffset;
 
-            // Update zoom based on player speed and jumping
-            AdjustZoom();
+                    // Update zoom based on player speed and jumping
+                    AdjustZoom();
+                }
+            }
         }
     }
 
@@ -79,5 +110,27 @@ public class CameraFollowTarget : MonoBehaviour
 
         // Smoothly interpolate between the current zoom and the target zoom
         cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetZoom, Time.deltaTime * zoomSpeed);
+    }
+
+    // New Method: Rotate around the player and use LookAt to keep the player in focus
+    void RotateAndLookAtPlayer()
+    {
+        
+
+        // Clamp the vertical rotation to prevent flipping
+        verticalRotation = Mathf.Clamp(verticalRotation, -verticalRotationLimit, verticalRotationLimit);
+
+        // Calculate the new rotation
+        Quaternion rotation = Quaternion.Euler(verticalRotation, horizontalRotation, 0);
+
+        // Calculate the position based on the new rotation and the offset distance from the player
+        Vector3 newPosition = player.position - (rotation * Vector3.forward * offset.magnitude);
+
+        // Apply the new position
+        transform.position = new Vector3( newPosition.x, transform.position.y, transform.position.z);
+        
+
+        // Make sure the camera always looks at the player
+        transform.LookAt(player);
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
-    public float moveSpeed = 5f;   // Horizontal movement speed
+    [SerializeField] private float moveSpeed = 5f;   // Horizontal movement speed
     public float jumpForce = 10f;  // Initial jump force
     public float maxJumpTime = 0.3f;  // Maximum time the player can hold the jump button to extend the jump
     public float fallMultiplier = 4f;  // Increases gravity when falling
@@ -48,7 +48,10 @@ public class PlayerController : MonoBehaviour
         cameraShake = cam.GetComponent<CameraShake>();
         isAlive = true;
     }
-
+    public float GetSpeed()
+    {
+        return moveSpeed;
+    }
     void Update()
     {
         if (isAlive)

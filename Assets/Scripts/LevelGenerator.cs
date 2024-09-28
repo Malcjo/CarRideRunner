@@ -5,7 +5,6 @@ using UnityEngine;
 public class LevelGenerator : MonoBehaviour
 {
     public GameObject[] platformPrefabs;  // Array of different platform prefabs to spawn randomly
-    public GameObject obstaclePrefab;     // Prefab of the obstacle (optional)
     public Transform player;              // Reference to the player
     public float spawnDistance = 20f;     // Distance ahead of the player to spawn new platforms
     public float platformLength = 10f;    // Length of each platform
@@ -19,7 +18,8 @@ public class LevelGenerator : MonoBehaviour
     public void startSpawning()
     {
         startRandomSpawn = true;
-        nextSpawnX = player.position.x + (platformLength / 2);  // Set spawn position after the custom section
+        nextSpawnX = Mathf.Ceil(player.position.x / platformLength) * platformLength;
+        //nextSpawnX = player.position.x + (platformLength /2);  // Set spawn position after the custom section
     }
     void Update()
     {

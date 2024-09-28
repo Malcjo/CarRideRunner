@@ -14,6 +14,9 @@ public class CameraTargetFollow : MonoBehaviour
 
     private float currentFollowSpeed;  // Store the current follow speed
 
+    // Toggle to enable or disable camera follow
+    public bool enableCameraFollow = true;  // Toggle to disable/enable camera follow
+
     void Start()
     {
         playerRb = player.GetComponent<Rigidbody>();
@@ -22,6 +25,12 @@ public class CameraTargetFollow : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!enableCameraFollow)
+        {
+            // Camera follow is disabled, do nothing
+            return;
+        }
+
         // Calculate the target position based on player position + offset
         Vector3 targetPosition = player.position + offset;
 
