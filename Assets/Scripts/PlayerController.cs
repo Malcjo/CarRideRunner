@@ -10,6 +10,11 @@ public class PlayerController : MonoBehaviour
     public float fallMultiplier = 4f;  // Increases gravity when falling
     public float lowJumpMultiplier = 2f;  // Applies when the player releases the jump button early
 
+    public float slopeLimit = 45f;  // Maximum angle the player can walk on
+    public float slopeCheckDistance = 1f;  // Distance for checking the slope
+    private bool onSlope = false;
+    private Vector3 slopeNormal;
+
     private Rigidbody rb;
     private bool isGrounded = false;
     public Transform groundCheck;
@@ -101,8 +106,21 @@ public class PlayerController : MonoBehaviour
     {
         if (isAlive)
         {
-            // Move player with physics-based velocity in FixedUpdate
-            rb.velocity = new Vector3(moveSpeed, rb.velocity.y, 0);
+            // Check for slopes and ground detection
+            CheckSlope();
+
+            // If on a slope, adjust movement to follow the slope normal
+            if (onSlope && isGrounded)
+            {
+                // Move along the slope
+                Vector3 slopeMoveDirection = Vector3.ProjectOnPlane(transform.forward, slopeNormal).normalized;
+                rb.velocity = slopeMoveDirection * moveSpeed + new Vector3(0, rb.velocity.y, 0);  // Preserve Y velocity for jumping
+            }
+            else
+            {
+                // Normal horizontal movement if not on slope
+                rb.velocity = new Vector3(moveSpeed, rb.velocity.y, 0);
+            }
 
             // Ground detection
             isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundCheckRadius, groundLayer);
@@ -126,6 +144,22 @@ public class PlayerController : MonoBehaviour
 
             // Track whether the player was grounded in the last frame
             wasGrounded = isGrounded;
+        }
+    }
+
+    // Check if the player is on a slope
+    private void CheckSlope()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, slopeCheckDistance))
+        {
+            slopeNormal = hit.normal;
+            float angle = Vector3.Angle(slopeNormal, Vector3.up);
+            onSlope = angle > 0 && angle <= slopeLimit;
+        }
+        else
+        {
+            onSlope = false;
         }
     }
 

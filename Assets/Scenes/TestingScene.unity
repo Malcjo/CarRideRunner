@@ -153,8 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   platformPrefabs:
-  - {fileID: 5421147157341382897, guid: 3eaadd7ded460874bb79df36c087b2b2, type: 3}
-  - {fileID: 1151021377484582038, guid: 62c0b427b608047449b427b111437189, type: 3}
+  - {fileID: 1151021377484582038, guid: cb9e1bdd578fff245b0c319314d407bb, type: 3}
   obstaclePrefab: {fileID: 2328751071195842202, guid: 2fc36751541953e4d8cafa11c603fc79, type: 3}
   player: {fileID: 478672042}
   spawnDistance: 40
@@ -291,6 +290,8 @@ MonoBehaviour:
   maxJumpTime: 0.22
   fallMultiplier: 8
   lowJumpMultiplier: 10
+  slopeLimit: 45
+  slopeCheckDistance: 1
   groundCheck: {fileID: 1774675676}
   groundCheckRadius: 0.4
   groundLayer:
@@ -317,7 +318,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 112
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!136 &478672039
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -325,7 +326,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 478672036}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 4b516ce4366eee344a1751b0164bb345, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.5
@@ -617,6 +618,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isShaking: 0
+  LightVerticalShakeValues: {x: 0.01, y: 0.25, z: 0.5, w: 5}
 --- !u!1 &1104457262
 GameObject:
   m_ObjectHideFlags: 0
@@ -664,6 +666,8 @@ MonoBehaviour:
   minFollowSpeed: 0.05
   maxFollowSpeed: 0.3
   offset: {x: 0, y: 2, z: -10}
+  verticalDelay: 1.2
+  HorizontalDelay: 5
 --- !u!1 &1571182104
 GameObject:
   m_ObjectHideFlags: 0
