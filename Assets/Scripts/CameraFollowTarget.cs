@@ -24,16 +24,20 @@ public class CameraFollowTarget : MonoBehaviour
     {
         cam = Camera.main;
         playerRb = player.GetComponent<Rigidbody>();
+
     }
 
     private void FixedUpdate()
     {
-        // Smoothly move the camera to the target position using SmoothDamp
-        Vector3 desiredPosition = cameraTarget.position + offset;
-        transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothSpeed);
+        if(player.GetComponent<PlayerController>().isAlive == true)
+        {
+            // Smoothly move the camera to the target position using SmoothDamp
+            Vector3 desiredPosition = cameraTarget.position + offset;
+            transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothSpeed);
 
-        // Update zoom based on player speed and jumping
-        AdjustZoom();
+            // Update zoom based on player speed and jumping
+            AdjustZoom();
+        }
     }
 
     void AdjustZoom()

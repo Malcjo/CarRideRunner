@@ -1,10 +1,10 @@
 using System.Collections;
-using System.Collections.Generic;  // For Queue
+using System.Collections.Generic;
 using UnityEngine;
 
 public class LevelGenerator : MonoBehaviour
 {
-    public GameObject[] platformPrefabs;  // Array of different platform prefabs
+    public GameObject[] platformPrefabs;  // Array of different platform prefabs to spawn randomly
     public GameObject obstaclePrefab;     // Prefab of the obstacle (optional)
     public Transform player;              // Reference to the player
     public float spawnDistance = 20f;     // Distance ahead of the player to spawn new platforms
@@ -12,20 +12,23 @@ public class LevelGenerator : MonoBehaviour
     public float despawnDistance = 30f;   // Distance behind the player to despawn platforms
     private float nextSpawnX = 0f;        // Next X position for spawning
 
+    private bool startRandomSpawn = false;  // Flag to indicate if random spawning has started
     private Queue<GameObject> spawnedPlatforms = new Queue<GameObject>();  // Queue to track spawned platforms
 
-    void Start()
+    
+    public void startSpawning()
     {
-        // Pre-generate some platforms
-        for (int i = 0; i < 5; i++)
-        {
-            SpawnPlatform(nextSpawnX);
-            nextSpawnX += platformLength;
-        }
+        startRandomSpawn = true;
+        nextSpawnX = player.position.x + (platformLength /2);  // Set spawn position after the custom section
     }
-
     void Update()
     {
+        // If random spawning hasn't started yet, exit
+        if (!startRandomSpawn)
+        {
+            return;
+        }
+
         // Spawn new platform when player is close enough
         if (player.position.x + spawnDistance > nextSpawnX)
         {
@@ -58,16 +61,6 @@ public class LevelGenerator : MonoBehaviour
 
         // Add the newly spawned platform to the queue
         spawnedPlatforms.Enqueue(newPlatform);
-
-        /*
-        // Optionally spawn obstacles on the platform
-        if (Random.Range(0f, 1f) > 0.5f)  // 50% chance to spawn an obstacle
-        {
-            Vector3 obstaclePosition = new Vector3(spawnX + Random.Range(2f, 8f), 1f, 0f);
-            Instantiate(obstaclePrefab, obstaclePosition, Quaternion.identity);
-        }
-
-        */
     }
 
     void DestroyPlatform()
@@ -75,5 +68,18 @@ public class LevelGenerator : MonoBehaviour
         // Remove the oldest platform from the queue and destroy it
         GameObject oldestPlatform = spawnedPlatforms.Dequeue();
         Destroy(oldestPlatform);
+    }
+
+    // Trigger event to start random spawning
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            // When the player hits the trigger, start random spawning
+            startRandomSpawn = true;
+
+            // Set the starting position for random spawning after the custom section
+            nextSpawnX = player.position.x + platformLength;  // Begin spawning after current position
+        }
     }
 }
