@@ -7,13 +7,18 @@ public class CameraFollowTarget : MonoBehaviour
     public Vector3 offset = new Vector3(0, 5, -10);  // Offset from the camera target
     public Transform player;  // Reference to the player for speed-based zoom
 
-    public float minZoom = 60f;  // Minimum FOV/Zoom
-    public float maxZoom = 80f;  // Maximum FOV/Zoom
-    public float zoomSpeed = 10f;  // How quickly the zoom adjusts
-
     private Camera cam;
     private Rigidbody playerRb;
     private Vector3 velocity = Vector3.zero;  // For SmoothDamp smoothing
+
+    public float minZoom = 60f;  // Minimum FOV/Zoom
+    public float maxZoom = 80f;  // Maximum FOV/Zoom
+    public float zoomSpeed = 10f;  // Speed of zoom interpolation
+    public float longJumpThreshold = 0.5f;  // Time in air considered a "long jump"
+    public float maxSpeed = 20f;  // Maximum player speed to normalize zoom
+
+    private float timeInAir = 0f;  // Track how long the player is in the air
+    private bool isGrounded = true;  // Track if the player is grounded (simplified)
 
     private void Start()
     {
@@ -27,25 +32,38 @@ public class CameraFollowTarget : MonoBehaviour
         Vector3 desiredPosition = cameraTarget.position + offset;
         transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothSpeed);
 
-        // Adjust zoom based on player speed and vertical movement
+        // Update zoom based on player speed and jumping
         AdjustZoom();
     }
 
     void AdjustZoom()
     {
-        float playerSpeed = playerRb.velocity.magnitude;  // Calculate the player's speed
+        float playerSpeed = Mathf.Clamp(playerRb.velocity.magnitude, 0, maxSpeed);  // Clamp player speed
         float playerVerticalSpeed = playerRb.velocity.y;  // Calculate vertical speed (for jumps)
 
-        // Dynamic zoom based on player speed
-        float targetZoom = Mathf.Lerp(minZoom, maxZoom, playerSpeed / zoomSpeed);
-
-        // Zoom out more if the player is jumping upwards
-        if (playerVerticalSpeed > 0.1f)
+        // Track how long the player is in the air
+        if (Mathf.Abs(playerVerticalSpeed) > 0.1f)  // Player is jumping or falling
         {
-            targetZoom += 5f;  // Increase zoom slightly when jumping
+            timeInAir += Time.deltaTime;  // Increase the time in the air
+            isGrounded = false;
+        }
+        else if (!isGrounded)  // If the player lands (vertical speed is near zero)
+        {
+            timeInAir = 0f;  // Reset time in air when the player lands
+            isGrounded = true;
         }
 
+        // Gradual zoom adjustment based on speed percentage
+        float speedFactor = playerSpeed / maxSpeed;  // Normalized speed (0 to 1)
+        float jumpFactor = Mathf.Clamp01(timeInAir / longJumpThreshold);  // Normalized jump factor (0 to 1)
+
+        // Combine speed and jump influence on zoom (weight them equally)
+        float zoomFactor = Mathf.Clamp01(speedFactor + jumpFactor);  // Limit the combined factor to 1
+
+        // Gradually approach the target zoom based on speedFactor (closer to maxZoom as speed increases)
+        float targetZoom = Mathf.Lerp(minZoom, maxZoom, zoomFactor);
+
         // Smoothly interpolate between the current zoom and the target zoom
-        cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetZoom, Time.deltaTime);
+        cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetZoom, Time.deltaTime * zoomSpeed);
     }
 }

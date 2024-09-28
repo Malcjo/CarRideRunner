@@ -155,8 +155,6 @@ MonoBehaviour:
   platformPrefabs:
   - {fileID: 5421147157341382897, guid: 3eaadd7ded460874bb79df36c087b2b2, type: 3}
   - {fileID: 5421147157341382897, guid: 3eaadd7ded460874bb79df36c087b2b2, type: 3}
-  - {fileID: 5421147157341382897, guid: 3eaadd7ded460874bb79df36c087b2b2, type: 3}
-  - {fileID: 5421147157341382897, guid: 3eaadd7ded460874bb79df36c087b2b2, type: 3}
   obstaclePrefab: {fileID: 2328751071195842202, guid: 2fc36751541953e4d8cafa11c603fc79, type: 3}
   player: {fileID: 478672042}
   spawnDistance: 20
@@ -210,13 +208,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  jumpForce: 7
-  isGrounded: 1
+  jumpForce: 20
+  maxJumpTime: 0.22
+  fallMultiplier: 8
+  lowJumpMultiplier: 10
   groundCheck: {fileID: 1774675676}
-  groundCheckRadius: 0.1
+  groundCheckRadius: 0.4
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  coyoteTime: 0.1
+  jumpBufferTime: 0.1
 --- !u!54 &478672038
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -233,8 +235,8 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!65 &478672039
-BoxCollider:
+--- !u!136 &478672039
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -243,8 +245,9 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &478672040
 MeshRenderer:
@@ -294,7 +297,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 478672036}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!4 &478672042
 Transform:
   m_ObjectHideFlags: 0
@@ -504,7 +507,7 @@ MonoBehaviour:
   smoothSpeed: 0.125
   offset: {x: 0, y: 0, z: -15}
   player: {fileID: 478672042}
-  minZoom: 30
+  minZoom: 40
   maxZoom: 60
   zoomSpeed: 10
 --- !u!114 &963194230
@@ -564,7 +567,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 478672042}
-  followSpeed: 5
+  minFollowSpeed: 0.05
+  maxFollowSpeed: 0.3
   offset: {x: 0, y: 2, z: -10}
 --- !u!1 &1774675675
 GameObject:
@@ -590,7 +594,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1774675675}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.45, z: 0}
+  m_LocalPosition: {x: 0, y: -0.95, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 478672042}
