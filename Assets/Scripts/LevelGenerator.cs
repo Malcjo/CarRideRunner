@@ -106,9 +106,8 @@ public class LevelGenerator : MonoBehaviour
             platformPrefab = layerPieces.layerContentPieces.standardPieces[Random.Range(0, layerPieces.layerContentPieces.standardPieces.Length)];
         }
 
-        Vector3 spawnPosition = new Vector3(spawnX, 0, 0);
+        Vector3 spawnPosition = new Vector3(spawnX, GetLayerHeight(layer), 0);
         GameObject newPlatform = Instantiate(platformPrefab, spawnPosition, Quaternion.identity);
-        //GameObject newPlatform = Instantiate(platformPrefab, spawnPosition, Quaternion.identity);
         spawnedPlatforms.Enqueue(newPlatform);
     }
 
