@@ -18,7 +18,7 @@ public class LevelGenerator : MonoBehaviour
     public void startSpawning()
     {
         startRandomSpawn = true;
-        nextSpawnX = platformLength + (platformLength /2);
+        nextSpawnX = (platformLength + (platformLength /2) *2);
         //nextSpawnX = Mathf.Ceil(player.position.x / platformLength) * platformLength;
         //nextSpawnX = player.position.x + (platformLength /2);  // Set spawn position after the custom section
     }
