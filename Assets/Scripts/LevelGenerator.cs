@@ -120,18 +120,46 @@ public class LevelGenerator : MonoBehaviour
     {
         List<int> validLayers = new List<int>();
 
-        // Transition between High (3) and Sky (4) for now, only adjacent layers
-        if (currentLayer == 3)  // High layer
+        // Determine adjacent valid layers
+        if (currentLayer == 4)  // Sky layer
+        {
+            validLayers.Add(3);  // Can move to High
+        }
+        else if (currentLayer == 3)  // High layer
         {
             validLayers.Add(4);  // Can move to Sky
-        }
-        else if (currentLayer == 4)  // Sky layer
-        {
-            validLayers.Add(3);  // Can move back to High
         }
 
         return validLayers[Random.Range(0, validLayers.Count)];
     }
+    /*
+    int GetValidAdjacentLayer()
+    {
+        List<int> validLayers = new List<int>();
+
+        // Determine adjacent valid layers
+        if (currentLayer == 4)  // Sky layer
+        {
+            validLayers.Add(3);  // Can move to High
+        }
+        else if (currentLayer == 3)  // High layer
+        {
+            validLayers.Add(4);  // Can move to Sky
+            validLayers.Add(2);  // Can move to Medium
+        }
+        else if (currentLayer == 2)  // Medium layer
+        {
+            validLayers.Add(3);  // Can move to High
+            validLayers.Add(1);  // Can move to Lower
+        }
+        else if (currentLayer == 1)  // Lower layer
+        {
+            validLayers.Add(2);  // Can move to Medium
+        }
+
+        return validLayers[Random.Range(0, validLayers.Count)];
+    }
+    */
 
     void TransitionToLayer(int nextLayer)
     {
