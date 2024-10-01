@@ -106,7 +106,7 @@ public class LevelGenerator : MonoBehaviour
             platformPrefab = layerPieces.layerContentPieces.standardPieces[Random.Range(0, layerPieces.layerContentPieces.standardPieces.Length)];
         }
 
-        Vector3 spawnPosition = new Vector3(spawnX, GetLayerHeight(layer), 0);
+        Vector3 spawnPosition = new Vector3(spawnX, 0, 0);
         GameObject newPlatform = Instantiate(platformPrefab, spawnPosition, Quaternion.identity);
         spawnedPlatforms.Enqueue(newPlatform);
     }
@@ -149,7 +149,6 @@ public class LevelGenerator : MonoBehaviour
         }
 
         // Instantiate the transition piece
-        //Instantiate(enterPiece, new Vector3(nextSpawnX, GetLayerHeight(nextLayer), 0), Quaternion.identity);
         Instantiate(enterPiece, new Vector3(nextSpawnX, 0, 0), Quaternion.identity);
         nextSpawnX += platformLength;
 
@@ -164,9 +163,4 @@ public class LevelGenerator : MonoBehaviour
         Destroy(oldestPlatform);
     }
 
-    float GetLayerHeight(int layer)
-    {
-        float[] layerHeights = new float[] { 0f, 10f, 20f, 30f };  // Lower, Medium, High, Sky heights
-        return layerHeights[layer - 1];  // Adjust for 1-based layer index
-    }
 }
