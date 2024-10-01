@@ -299,6 +299,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: DeathZone
       objectReference: {fileID: 0}
+    - target: {fileID: 2328751071195842202, guid: e99c48355b116db498a4335744e0dd0d, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2328751071195842202, guid: e99c48355b116db498a4335744e0dd0d, type: 3}
+      propertyPath: m_TagString
+      value: Killbox
+      objectReference: {fileID: 0}
     - target: {fileID: 2328751071195842206, guid: e99c48355b116db498a4335744e0dd0d, type: 3}
       propertyPath: m_RootOrder
       value: 2

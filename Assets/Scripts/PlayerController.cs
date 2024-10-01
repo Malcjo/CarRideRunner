@@ -194,7 +194,7 @@ public class PlayerController : MonoBehaviour
     // Handle collisions with obstacles
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Obstacle"))
+        if (collision.gameObject.CompareTag("Killbox"))
         {
             // Trigger the shake and handle the destruction and restart process
             StartCoroutine(HandlePlayerHitObstacle());
@@ -221,10 +221,14 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("StartGame"))
+        if (other.gameObject.layer == LayerMask.NameToLayer("Hitbox"))
         {
-            Debug.Log("Start Spawning");
-            levelmanager.GetComponent<LevelGenerator>().startSpawning();
+            if (other.CompareTag("StartGame"))
+            {
+                Debug.Log("Start Spawning");
+                levelmanager.GetComponent<LevelGenerator>().startSpawning();
+            }
         }
+
     }
 }
