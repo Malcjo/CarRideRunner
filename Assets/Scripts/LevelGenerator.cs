@@ -4,45 +4,77 @@ using UnityEngine;
 
 public class LevelGenerator : MonoBehaviour
 {
-    public GameObject[] platformPrefabs;  // Array of different platform prefabs to spawn randomly
-    public Transform player;              // Reference to the player
-    public float spawnDistance = 20f;     // Distance ahead of the player to spawn new platforms
-    public float platformLength = 10f;    // Length of each platform
-    public float despawnDistance = 30f;   // Distance behind the player to despawn platforms
-    private float nextSpawnX = 0f;        // Next X position for spawning
-
-    private bool startRandomSpawn = false;  // Flag to indicate if random spawning has started
-    private Queue<GameObject> spawnedPlatforms = new Queue<GameObject>();  // Queue to track spawned platforms
-
-    
-    public void startSpawning()
+    [System.Serializable]
+    public class LayerPieces
     {
-        startRandomSpawn = true;
-        nextSpawnX = (platformLength *4 + (platformLength /2));
-        //nextSpawnX = Mathf.Ceil(player.position.x / platformLength) * platformLength;
-        //nextSpawnX = player.position.x + (platformLength /2);  // Set spawn position after the custom section
+        [System.Serializable]
+        public class TransitionPieces
+        {
+            public GameObject[] enterFromAbovePieces;  // Pieces for entering from above
+            public GameObject[] enterFromBelowPieces;  // Pieces for entering from below
+        }
+
+        [System.Serializable]
+        public class LayerContentPieces
+        {
+            public GameObject[] standardPieces;
+            public GameObject[] easySpecialPieces;
+            public GameObject[] toughSpecialPieces;
+            public GameObject[] hardestSpecialPieces;
+        }
+
+        public TransitionPieces transitionPieces;
+        public LayerContentPieces layerContentPieces;
     }
+
+    public LayerPieces skyPieces;
+    public LayerPieces highPieces;
+    public LayerPieces mediumPieces;  // Disabled for now
+    public LayerPieces lowerPieces;   // Disabled for now
+
+    private LayerPieces[] allLayerPieces;
+
+    public Transform player;
+    public float spawnDistance = 20f;
+    public float platformLength = 10f;
+    public float despawnDistance = 30f;
+    private float nextSpawnX = 0f;
+
+    private bool startRandomSpawn = false;
+    private Queue<GameObject> spawnedPlatforms = new Queue<GameObject>();
+
+    private int currentLayer = 3;  // Start with High layer (3)
+    private int previousLayer = 3; // Start with High as the previous layer too
+
+    public void StartSpawning()
+    {
+        // Limit to High and Sky for now
+        allLayerPieces = new LayerPieces[] { lowerPieces, mediumPieces, highPieces, skyPieces };
+        startRandomSpawn = true;
+        nextSpawnX = platformLength * 4 + platformLength / 2;
+    }
+
     void Update()
     {
-        // If random spawning hasn't started yet, exit
-        if (!startRandomSpawn)
-        {
-            return;
-        }
+        if (!startRandomSpawn) return;
 
-        // Spawn new platform when player is close enough
         if (player.position.x + spawnDistance > nextSpawnX)
         {
-            SpawnPlatform(nextSpawnX);
-            nextSpawnX += platformLength;
+            if (ShouldTransitionLayer())
+            {
+                int nextLayer = GetValidAdjacentLayer();
+                TransitionToLayer(nextLayer);
+            }
+            else
+            {
+                SpawnPlatform(nextSpawnX, currentLayer);
+                nextSpawnX += platformLength;
+            }
         }
 
-        // Destroy platforms that are behind the player
         if (spawnedPlatforms.Count > 0)
         {
-            GameObject oldestPlatform = spawnedPlatforms.Peek();  // Get the oldest platform without removing it
-
-            // If the platform is far behind the player, destroy it
+            GameObject oldestPlatform = spawnedPlatforms.Peek();
             if (player.position.x - despawnDistance > oldestPlatform.transform.position.x)
             {
                 DestroyPlatform();
@@ -50,37 +82,92 @@ public class LevelGenerator : MonoBehaviour
         }
     }
 
-    void SpawnPlatform(float spawnX)
+    void SpawnPlatform(float spawnX, int layer)
     {
-        // Randomly select a platform prefab from the array
-        int randomIndex = Random.Range(0, platformPrefabs.Length);
-        GameObject platformPrefab = platformPrefabs[randomIndex];
+        LayerPieces layerPieces = allLayerPieces[layer - 1]; // Adjust for 1-based layer index
 
-        // Instantiate the platform
+        GameObject platformPrefab;
+
+        float rarityChance = Random.Range(0f, 1f);
+        if (rarityChance < 0.1f && layerPieces.layerContentPieces.hardestSpecialPieces.Length > 0)
+        {
+            platformPrefab = layerPieces.layerContentPieces.hardestSpecialPieces[Random.Range(0, layerPieces.layerContentPieces.hardestSpecialPieces.Length)];
+        }
+        else if (rarityChance < 0.3f && layerPieces.layerContentPieces.toughSpecialPieces.Length > 0)
+        {
+            platformPrefab = layerPieces.layerContentPieces.toughSpecialPieces[Random.Range(0, layerPieces.layerContentPieces.toughSpecialPieces.Length)];
+        }
+        else if (rarityChance < 0.6f && layerPieces.layerContentPieces.easySpecialPieces.Length > 0)
+        {
+            platformPrefab = layerPieces.layerContentPieces.easySpecialPieces[Random.Range(0, layerPieces.layerContentPieces.easySpecialPieces.Length)];
+        }
+        else
+        {
+            platformPrefab = layerPieces.layerContentPieces.standardPieces[Random.Range(0, layerPieces.layerContentPieces.standardPieces.Length)];
+        }
+
         Vector3 spawnPosition = new Vector3(spawnX, 0, 0);
         GameObject newPlatform = Instantiate(platformPrefab, spawnPosition, Quaternion.identity);
-
-        // Add the newly spawned platform to the queue
+        //GameObject newPlatform = Instantiate(platformPrefab, spawnPosition, Quaternion.identity);
         spawnedPlatforms.Enqueue(newPlatform);
+    }
+
+    bool ShouldTransitionLayer()
+    {
+        return Random.Range(0f, 1f) < 0.2f;  // 20% chance to transition
+    }
+
+    int GetValidAdjacentLayer()
+    {
+        List<int> validLayers = new List<int>();
+
+        // Transition between High (3) and Sky (4) for now, only adjacent layers
+        if (currentLayer == 3)  // High layer
+        {
+            validLayers.Add(4);  // Can move to Sky
+        }
+        else if (currentLayer == 4)  // Sky layer
+        {
+            validLayers.Add(3);  // Can move back to High
+        }
+
+        return validLayers[Random.Range(0, validLayers.Count)];
+    }
+
+    void TransitionToLayer(int nextLayer)
+    {
+        LayerPieces nextLayerPieces = allLayerPieces[nextLayer - 1];
+        GameObject enterPiece;
+
+        // Check if moving to a higher layer or lower layer
+        if (nextLayer > currentLayer)  // Moving up a layer
+        {
+            enterPiece = nextLayerPieces.transitionPieces.enterFromBelowPieces[Random.Range(0, nextLayerPieces.transitionPieces.enterFromBelowPieces.Length)];
+        }
+        else  // Moving down a layer
+        {
+            enterPiece = nextLayerPieces.transitionPieces.enterFromAbovePieces[Random.Range(0, nextLayerPieces.transitionPieces.enterFromAbovePieces.Length)];
+        }
+
+        // Instantiate the transition piece
+        //Instantiate(enterPiece, new Vector3(nextSpawnX, GetLayerHeight(nextLayer), 0), Quaternion.identity);
+        Instantiate(enterPiece, new Vector3(nextSpawnX, 0, 0), Quaternion.identity);
+        nextSpawnX += platformLength;
+
+        // Update current and previous layers
+        previousLayer = currentLayer;
+        currentLayer = nextLayer;
     }
 
     void DestroyPlatform()
     {
-        // Remove the oldest platform from the queue and destroy it
         GameObject oldestPlatform = spawnedPlatforms.Dequeue();
         Destroy(oldestPlatform);
     }
 
-    // Trigger event to start random spawning
-    private void OnTriggerEnter(Collider other)
+    float GetLayerHeight(int layer)
     {
-        if (other.CompareTag("Player"))
-        {
-            // When the player hits the trigger, start random spawning
-            startRandomSpawn = true;
-
-            // Set the starting position for random spawning after the custom section
-            nextSpawnX = player.position.x + platformLength;  // Begin spawning after current position
-        }
+        float[] layerHeights = new float[] { 0f, 10f, 20f, 30f };  // Lower, Medium, High, Sky heights
+        return layerHeights[layer - 1];  // Adjust for 1-based layer index
     }
 }

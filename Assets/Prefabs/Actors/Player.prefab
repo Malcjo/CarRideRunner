@@ -83,7 +83,7 @@ MonoBehaviour:
   fallMultiplier: 8
   lowJumpMultiplier: 10
   slopeLimit: 45
-  slopeCheckDistance: 1
+  slopeCheckDistance: 0.5
   groundCheck: {fileID: 8344593236594690013}
   groundCheckRadius: 0.4
   groundLayer:

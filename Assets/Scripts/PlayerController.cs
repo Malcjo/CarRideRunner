@@ -238,7 +238,7 @@ public class PlayerController : MonoBehaviour
             if (other.CompareTag("StartGame"))
             {
                 Debug.Log("Start Spawning");
-                levelmanager.GetComponent<LevelGenerator>().startSpawning();
+                levelmanager.GetComponent<LevelGenerator>().StartSpawning();
             }
         }
 
