@@ -15,6 +15,8 @@ public class PlayerController : MonoBehaviour
     private bool onSlope = false;
     private Vector3 slopeNormal;
 
+    private Animator animator;   // Reference to the Animator component
+
     private Rigidbody rb;
     private bool isGrounded = false;
     public Transform groundCheck;
@@ -31,6 +33,7 @@ public class PlayerController : MonoBehaviour
     public bool isAlive = true;
 
     private bool isJumping = false;  // Track if the player is currently jumping
+    private bool isFalling = false;  // Track if the player is falling (but not jumping)
     private bool wasGrounded = true; // Track whether the player was grounded last frame
     private float jumpTimeCounter;   // Tracks how long the player has been holding the jump button
 
@@ -46,6 +49,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        animator = GetComponentInChildren<Animator>();  // Reference the Animator in the child object
         cameraShake = cam.GetComponent<CameraShake>();
         isAlive = true;
         transform.position = startingPosition.transform.position;
@@ -58,6 +62,7 @@ public class PlayerController : MonoBehaviour
     {
         if (isAlive)
         {
+            HandleAnimations();
             // Update coyote time
             if (isGrounded)
             {
@@ -82,6 +87,7 @@ public class PlayerController : MonoBehaviour
             if (jumpBufferCounter > 0 && (isGrounded || coyoteTimeCounter > 0))
             {
                 isJumping = true;
+                isFalling = false;  // Not falling since we're jumping
                 jumpTimeCounter = maxJumpTime;  // Reset jump counter to maximum jump time
                 rb.velocity = new Vector3(rb.velocity.x, jumpForce, rb.velocity.z);  // Apply initial jump force
                 jumpBufferCounter = 0;  // Reset jump buffer once the jump is triggered
@@ -106,6 +112,11 @@ public class PlayerController : MonoBehaviour
             if (Input.GetButtonUp("Jump"))
             {
                 isJumping = false;  // Stop extending the jump when button is released
+            }
+            // If the player walks off the platform without jumping
+            if (!isGrounded && !isJumping)
+            {
+                isFalling = true;
             }
         }
     }
@@ -136,6 +147,7 @@ public class PlayerController : MonoBehaviour
             {
                 if (hit.collider.CompareTag("Ground"))
                 {
+                    isFalling = false;
                     isGrounded = true;
                 }
                 else
@@ -230,5 +242,14 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+    }
+
+    private void HandleAnimations()
+    {
+        // Set animator parameters based on player state
+        animator.SetFloat("Speed", Mathf.Abs(moveSpeed));
+        animator.SetBool("isGrounded", isGrounded);
+        animator.SetBool("isJumping", isJumping);
+        animator.SetBool("isFalling", isFalling);
     }
 }
