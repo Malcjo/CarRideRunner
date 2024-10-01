@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundLayer;
 
     public GameObject levelmanager;
+    public GameObject startingPosition;
 
     public Camera cam;
     private CameraShake cameraShake;  // Reference to the CameraShake script
@@ -47,6 +48,7 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         cameraShake = cam.GetComponent<CameraShake>();
         isAlive = true;
+        transform.position = startingPosition.transform.position;
     }
     public float GetSpeed()
     {
@@ -129,7 +131,23 @@ public class PlayerController : MonoBehaviour
             }
 
             // Ground detection
-            isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundCheckRadius, groundLayer);
+            RaycastHit hit;
+            if (Physics.Raycast(groundCheck.position, Vector3.down, out hit, groundCheckRadius, LayerMask.GetMask("Hitbox")))
+            {
+                if (hit.collider.CompareTag("Ground"))
+                {
+                    isGrounded = true;
+                }
+                else
+                {
+                    isGrounded = false;
+                }
+            }
+            else
+            {
+                isGrounded = false;
+            }
+            //isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundCheckRadius, groundLayer);
 
             // Apply custom gravity when falling
             if (rb.velocity.y < 0)  // Player is falling
@@ -205,6 +223,7 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("StartGame"))
         {
+            Debug.Log("Start Spawning");
             levelmanager.GetComponent<LevelGenerator>().startSpawning();
         }
     }
