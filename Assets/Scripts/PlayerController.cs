@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 slopeNormal;
 
     private Animator animator;   // Reference to the Animator component
+    public GameManager gameManager;
 
     private Rigidbody rb;
     private bool isGrounded = false;
@@ -46,6 +47,10 @@ public class PlayerController : MonoBehaviour
     // Fall velocity threshold for triggering the camera shake
     public float fallVelocityThreshold = -8f;  // Minimum falling speed to trigger camera shake
 
+    private void Awake()
+    {
+        gameManager = FindObjectOfType<GameManager>();
+    }
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -216,6 +221,7 @@ public class PlayerController : MonoBehaviour
     // Coroutine to shake the camera, destroy the player, and restart the game
     private IEnumerator HandlePlayerHitObstacle()
     {
+        gameManager.PlayerDied();
         isAlive = false;
         yield return new WaitForSeconds(0.25f);
         // Step 1: Shake the camera

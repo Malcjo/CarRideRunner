@@ -103,17 +103,19 @@ public class LevelGenerator : MonoBehaviour
         // Get the correct layer content based on currentLayer
         LayerPieces.StageTheme themeLayer = GetThemeLayer(layer);
         GameObject platformPrefab;
-        float rarityChance = Random.Range(0f, 1f);
+        //float rarityChance = Random.Range(0f, 1f);
+        //int rarityChance = Random.Range(0, 4f);
+        int rarityChance = 0;
 
-        if (rarityChance < 0.1f && themeLayer.difficulty.hardestSpecialPieces.Length > 0)
+        if (rarityChance == 3 && themeLayer.difficulty.hardestSpecialPieces.Length > 0)
         {
             platformPrefab = themeLayer.difficulty.hardestSpecialPieces[Random.Range(0, themeLayer.difficulty.hardestSpecialPieces.Length)];
         }
-        else if (rarityChance < 0.3f && themeLayer.difficulty.toughSpecialPieces.Length > 0)
+        else if (rarityChance == 2 && themeLayer.difficulty.toughSpecialPieces.Length > 0)
         {
             platformPrefab = themeLayer.difficulty.toughSpecialPieces[Random.Range(0, themeLayer.difficulty.toughSpecialPieces.Length)];
         }
-        else if (rarityChance < 0.6f && themeLayer.difficulty.easySpecialPieces.Length > 0)
+        else if (rarityChance == 1 && themeLayer.difficulty.easySpecialPieces.Length > 0)
         {
             platformPrefab = themeLayer.difficulty.easySpecialPieces[Random.Range(0, themeLayer.difficulty.easySpecialPieces.Length)];
         }
