@@ -36,29 +36,27 @@ public class LevelGenerator : MonoBehaviour
         public StageTheme[] sky;
     }
 
-    public LayerPieces[] themes;  // Multiple themes to choose from
+    public LayerPieces[] themes;  // Array of different themes
+    private LayerPieces.StageTheme currentStageTheme; // Track the current stage theme
+    public int currentLayer = 3;  // Start with High layer (3)
+    public int previousLayer = 3; // Track previous layer for transitions
+    private float timeSinceLastThemeSwitch = 0f; // Time tracking for theme switching
+    private float themeSwitchInterval = 30f; // Time interval before switching themes
 
-    private LayerPieces.StageTheme currentStageTheme;  // The current active stage theme
     public Transform player;
     public float spawnDistance = 20f;
     public float platformLength = 10f;
-    public float despawnDistance = 30f;
     private float nextSpawnX = 0f;
 
     private bool startRandomSpawn = false;
     private Queue<GameObject> spawnedPlatforms = new Queue<GameObject>();
 
-    private int currentLayer = 3;  // Start with High layer (3)
-    private int previousLayer = 3; // Start with High as the previous layer too
-
-    // Timer or distance for theme switching
-    private float themeSwitchInterval = 30f;  // Time or distance interval for theme switching
-    private float timeSinceLastThemeSwitch = 0f;
+    private LayerPieces.StageTheme[] currentLayerThemes; // Current layer themes
 
     public void StartSpawning()
     {
-        // Set up with the first theme and the high layer
-        currentStageTheme = themes[0].high[0];  // Example: Start with the first theme's high layer
+        currentLayerThemes = themes[Random.Range(0, themes.Length)].high;  // Start with a random theme for high layer
+        currentStageTheme = currentLayerThemes[Random.Range(0, currentLayerThemes.Length)];
         startRandomSpawn = true;
         nextSpawnX = platformLength * 4 + platformLength / 2;
     }
@@ -67,16 +65,9 @@ public class LevelGenerator : MonoBehaviour
     {
         if (!startRandomSpawn) return;
 
-        // Check for theme switching based on time or distance
-        timeSinceLastThemeSwitch += Time.deltaTime;
-        if (timeSinceLastThemeSwitch >= themeSwitchInterval)
-        {
-            SwitchTheme();
-        }
-
-        // Handle platform spawning
         if (player.position.x + spawnDistance > nextSpawnX)
         {
+            // Check if a transition is required or continue spawning
             if (ShouldTransitionLayer())
             {
                 int nextLayer = GetValidAdjacentLayer();
@@ -89,11 +80,18 @@ public class LevelGenerator : MonoBehaviour
             }
         }
 
-        // Destroy platforms behind the player
+        // Switch theme after a time interval
+        timeSinceLastThemeSwitch += Time.deltaTime;
+        if (timeSinceLastThemeSwitch > themeSwitchInterval)
+        {
+            SwitchThemeWithinLayer();  // Switch theme within the current layer
+        }
+
+        // Clean up old platforms
         if (spawnedPlatforms.Count > 0)
         {
             GameObject oldestPlatform = spawnedPlatforms.Peek();
-            if (player.position.x - despawnDistance > oldestPlatform.transform.position.x)
+            if (player.position.x - nextSpawnX > oldestPlatform.transform.position.x)
             {
                 DestroyPlatform();
             }
@@ -102,27 +100,26 @@ public class LevelGenerator : MonoBehaviour
 
     void SpawnPlatform(float spawnX, int layer)
     {
-        // Access the current stage's difficulty for the chosen layer
-        LayerPieces.LayerContentPieces layerContentPieces = currentStageTheme.difficulty;
-
+        // Get the correct layer content based on currentLayer
+        LayerPieces.StageTheme themeLayer = GetThemeLayer(layer);
         GameObject platformPrefab;
-
         float rarityChance = Random.Range(0f, 1f);
-        if (rarityChance < 0.1f && layerContentPieces.hardestSpecialPieces.Length > 0)
+
+        if (rarityChance < 0.1f && themeLayer.difficulty.hardestSpecialPieces.Length > 0)
         {
-            platformPrefab = layerContentPieces.hardestSpecialPieces[Random.Range(0, layerContentPieces.hardestSpecialPieces.Length)];
+            platformPrefab = themeLayer.difficulty.hardestSpecialPieces[Random.Range(0, themeLayer.difficulty.hardestSpecialPieces.Length)];
         }
-        else if (rarityChance < 0.3f && layerContentPieces.toughSpecialPieces.Length > 0)
+        else if (rarityChance < 0.3f && themeLayer.difficulty.toughSpecialPieces.Length > 0)
         {
-            platformPrefab = layerContentPieces.toughSpecialPieces[Random.Range(0, layerContentPieces.toughSpecialPieces.Length)];
+            platformPrefab = themeLayer.difficulty.toughSpecialPieces[Random.Range(0, themeLayer.difficulty.toughSpecialPieces.Length)];
         }
-        else if (rarityChance < 0.6f && layerContentPieces.easySpecialPieces.Length > 0)
+        else if (rarityChance < 0.6f && themeLayer.difficulty.easySpecialPieces.Length > 0)
         {
-            platformPrefab = layerContentPieces.easySpecialPieces[Random.Range(0, layerContentPieces.easySpecialPieces.Length)];
+            platformPrefab = themeLayer.difficulty.easySpecialPieces[Random.Range(0, themeLayer.difficulty.easySpecialPieces.Length)];
         }
         else
         {
-            platformPrefab = layerContentPieces.standardPieces[Random.Range(0, layerContentPieces.standardPieces.Length)];
+            platformPrefab = themeLayer.difficulty.standardPieces[Random.Range(0, themeLayer.difficulty.standardPieces.Length)];
         }
 
         Vector3 spawnPosition = new Vector3(spawnX, 0, 0);
@@ -130,51 +127,57 @@ public class LevelGenerator : MonoBehaviour
         spawnedPlatforms.Enqueue(newPlatform);
     }
 
-    bool ShouldTransitionLayer()
+    void SwitchThemeWithinLayer()
     {
-        return Random.Range(0f, 1f) < 0.2f;  // 20% chance to transition
+        // Switch the theme but stay within the same layer
+        LayerPieces.StageTheme[] currentLayerOptions = GetLayerThemes(currentLayer);
+        currentStageTheme = currentLayerOptions[Random.Range(0, currentLayerOptions.Length)];
+
+        timeSinceLastThemeSwitch = 0f;  // Reset the theme switch timer
+        Debug.Log($"Switched to a new theme in layer {currentLayer}");
     }
 
-    int GetValidAdjacentLayer()
+    LayerPieces.StageTheme[] GetLayerThemes(int layer)
     {
-        List<int> validLayers = new List<int>();
-
-        // Determine adjacent valid layers
-        if (currentLayer == 4)  // Sky layer
+        switch (layer)
         {
-            validLayers.Add(3);  // Can move to High
+            case 4:
+                return themes[Random.Range(0, themes.Length)].sky;  // Return Sky themes
+            case 3:
+                return themes[Random.Range(0, themes.Length)].high;  // Return High themes
+            case 2:
+                return themes[Random.Range(0, themes.Length)].medium;  // Return Medium themes
+            case 1:
+                return themes[Random.Range(0, themes.Length)].lower;  // Return Lower themes
+            default:
+                return themes[Random.Range(0, themes.Length)].high;  // Default to High themes
         }
-        else if (currentLayer == 3)  // High layer
-        {
-            validLayers.Add(4);  // Can move to Sky
-        }
+    }
 
-        return validLayers[Random.Range(0, validLayers.Count)];
+    LayerPieces.StageTheme GetThemeLayer(int layer)
+    {
+        // Return the current theme for the selected layer
+        return currentStageTheme;
     }
 
     void TransitionToLayer(int nextLayer)
     {
-        LayerPieces.StageTheme nextLayerTheme = null;  // Initialize variable to avoid unassigned variable error
+        // Get the current layer's themes
+        LayerPieces.StageTheme[] nextLayerThemes = GetLayerThemes(nextLayer);
 
-        // Get the next layer theme
-        if (nextLayer == 4)
-        {
-            nextLayerTheme = themes[Random.Range(0, themes.Length)].sky[Random.Range(0, themes[0].sky.Length)];
-        }
-        else if (nextLayer == 3)
-        {
-            nextLayerTheme = themes[Random.Range(0, themes.Length)].high[Random.Range(0, themes[0].high.Length)];
-        }
-
+        // Select a random theme from the new layer's themes
+        LayerPieces.StageTheme nextLayerTheme = nextLayerThemes[Random.Range(0, nextLayerThemes.Length)];
         GameObject enterPiece;
 
-        // Check if moving to a higher or lower layer
-        if (nextLayer > currentLayer)  // Moving up a layer
+        // Determine if the player is moving up or down between layers
+        if (nextLayer > currentLayer)
         {
+            // Moving up a layer, get enterFromBelowPieces
             enterPiece = nextLayerTheme.transitionPieces.enterFromBelowPieces[Random.Range(0, nextLayerTheme.transitionPieces.enterFromBelowPieces.Length)];
         }
-        else  // Moving down a layer
+        else
         {
+            // Moving down a layer, get enterFromAbovePieces
             enterPiece = nextLayerTheme.transitionPieces.enterFromAbovePieces[Random.Range(0, nextLayerTheme.transitionPieces.enterFromAbovePieces.Length)];
         }
 
@@ -186,8 +189,9 @@ public class LevelGenerator : MonoBehaviour
         previousLayer = currentLayer;
         currentLayer = nextLayer;
 
-        // Set the current stage theme to the next layer theme
-        currentStageTheme = nextLayerTheme;
+        // Update the theme based on the new layer
+        currentLayerThemes = nextLayerThemes;  // Update the layer's themes
+        currentStageTheme = nextLayerTheme;    // Update to the new stage theme
     }
 
     void DestroyPlatform()
@@ -196,14 +200,26 @@ public class LevelGenerator : MonoBehaviour
         Destroy(oldestPlatform);
     }
 
-    // Switch to a new theme randomly
-    void SwitchTheme()
+    bool ShouldTransitionLayer()
     {
-        // Randomly choose a new theme
-        currentStageTheme = themes[Random.Range(0, themes.Length)].high[Random.Range(0, themes[0].high.Length)]; // Example: switch to the high layer of the new theme
+        // Random chance to transition layers
+        return Random.Range(0f, 1f) < 0.2f;  // 20% chance to transition layers
+    }
 
-        // Reset the timer for theme switching
-        timeSinceLastThemeSwitch = 0f;
-        Debug.Log("Switched to new theme");
+    int GetValidAdjacentLayer()
+    {
+        List<int> validLayers = new List<int>();
+
+        // Transition between High (3) and Sky (4) for now
+        if (currentLayer == 4)
+        {
+            validLayers.Add(3);  // Can move down to High
+        }
+        else if (currentLayer == 3)
+        {
+            validLayers.Add(4);  // Can move up to Sky
+        }
+
+        return validLayers[Random.Range(0, validLayers.Count)];
     }
 }
