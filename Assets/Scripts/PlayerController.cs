@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;  // New Input System
 
 public class PlayerController : MonoBehaviour
 {
@@ -47,10 +48,29 @@ public class PlayerController : MonoBehaviour
     // Fall velocity threshold for triggering the camera shake
     public float fallVelocityThreshold = -8f;  // Minimum falling speed to trigger camera shake
 
+    private PlayerControls controls;  // Reference to the new Input System controls
+    private bool isJumpButtonHeld = false;  // Track if jump button is being held
+
     private void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
+        controls = new PlayerControls();  // Initialize controls
+
+        // Bind input actions for the new Input System
+        controls.Movement.Jump.started += ctx => OnJumpStart();
+        controls.Movement.Jump.canceled += ctx => OnJumpEnd();
     }
+
+    private void OnEnable()
+    {
+        controls.Movement.Enable();  // Enable controls
+    }
+
+    private void OnDisable()
+    {
+        controls.Movement.Disable();  // Disable controls
+    }
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -59,15 +79,18 @@ public class PlayerController : MonoBehaviour
         isAlive = true;
         transform.position = startingPosition.transform.position;
     }
+
     public float GetSpeed()
     {
         return moveSpeed;
     }
+
     void Update()
     {
         if (isAlive)
         {
             HandleAnimations();
+
             // Update coyote time
             if (isGrounded)
             {
@@ -78,6 +101,45 @@ public class PlayerController : MonoBehaviour
                 coyoteTimeCounter -= Time.deltaTime;  // Decrease coyote time when in the air
             }
 
+            // Decrease jump buffer timer
+            if (jumpBufferCounter > 0)
+            {
+                jumpBufferCounter -= Time.deltaTime;
+            }
+
+            // If jump buffer is active and player can jump (grounded or within coyote time)
+            if (jumpBufferCounter > 0 && (isGrounded || coyoteTimeCounter > 0))
+            {
+                isJumping = true;
+                isFalling = false;  // Not falling since we're jumping
+                jumpTimeCounter = maxJumpTime;  // Reset jump time counter
+                rb.velocity = new Vector3(rb.velocity.x, jumpForce, rb.velocity.z);  // Initial jump force
+                jumpBufferCounter = 0;  // Reset jump buffer once jump is triggered
+            }
+
+            // While holding the jump button and still within max jump time
+            if (isJumpButtonHeld && isJumping)
+            {
+                if (jumpTimeCounter > 0)
+                {
+                    // Continue applying upward force while holding the button
+                    rb.velocity = new Vector3(rb.velocity.x, jumpForce, rb.velocity.z);
+                    jumpTimeCounter -= Time.deltaTime;  // Decrease the jump time counter
+                }
+                else
+                {
+                    isJumping = false;  // Stop extending the jump when time is up
+                }
+            }
+
+            // If the player walks off the platform without jumping
+            if (!isGrounded && !isJumping)
+            {
+                isFalling = true;
+            }
+
+            // OLD INPUT SYSTEM (COMMENTED OUT)
+            /*
             // Update jump buffer time
             if (Input.GetButtonDown("Jump"))
             {
@@ -118,11 +180,7 @@ public class PlayerController : MonoBehaviour
             {
                 isJumping = false;  // Stop extending the jump when button is released
             }
-            // If the player walks off the platform without jumping
-            if (!isGrounded && !isJumping)
-            {
-                isFalling = true;
-            }
+            */
         }
     }
 
@@ -164,7 +222,6 @@ public class PlayerController : MonoBehaviour
             {
                 isGrounded = false;
             }
-            //isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundCheckRadius, groundLayer);
 
             // Apply custom gravity when falling
             if (rb.velocity.y < 0)  // Player is falling
@@ -247,7 +304,20 @@ public class PlayerController : MonoBehaviour
                 levelmanager.GetComponent<LevelGenerator>().StartSpawning();
             }
         }
+    }
 
+    // Called when the Jump button is pressed (new input system)
+    private void OnJumpStart()
+    {
+        isJumpButtonHeld = true;
+        jumpBufferCounter = jumpBufferTime;  // Start jump buffering
+    }
+
+    // Called when the Jump button is released (new input system)
+    private void OnJumpEnd()
+    {
+        isJumpButtonHeld = false;
+        isJumping = false;  // Stop extending the jump when button is released
     }
 
     private void HandleAnimations()
