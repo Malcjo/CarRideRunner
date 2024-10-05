@@ -38,6 +38,8 @@ public class CameraFollowTarget : MonoBehaviour
     // New variable for static camera position offset
     public Vector3 additionalOffset = new Vector3(0, 0, 0);  // Custom additional offset for camera position
     private Vector3 tempOffset;
+    [SerializeField] private Vector3 LookatOffset;
+
     private void Start()
     {
         cam = Camera.main;
@@ -46,13 +48,6 @@ public class CameraFollowTarget : MonoBehaviour
         // Initialize rotation values to the current camera angles
         horizontalRotation = transform.eulerAngles.y;
         verticalRotation = transform.eulerAngles.x;
-
-        // Apply the additional offset once to the base offset in Start() 
-        // This ensures the camera is initially positioned using the combined offset.
-        //Vector3 tempOffset = transform.position + additionalOffset;
-        //transform.position = tempOffset;
-
-        //offset += additionalOffset;
     }
 
     private void FixedUpdate()
@@ -66,7 +61,6 @@ public class CameraFollowTarget : MonoBehaviour
             }
             else
             {
-                // If dynamic zoom and follow are enabled, proceed with normal behavior
                 if (enableDynamicZoom)
                 {
                     // Smoothly move the camera to the target position using SmoothDamp
@@ -75,6 +69,9 @@ public class CameraFollowTarget : MonoBehaviour
 
                     // Apply the shake offset to the smoothed follow position
                     transform.position = smoothedPosition + shakeOffset;
+
+                    // Rotate the camera to smoothly follow the cameraTarget
+                    RotateTowardsTarget();
 
                     // Update zoom based on player speed and jumping
                     AdjustZoom();
@@ -120,7 +117,19 @@ public class CameraFollowTarget : MonoBehaviour
         cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetZoom, Time.deltaTime * zoomSpeed);
     }
 
+    // Rotate the camera smoothly towards the cameraTarget
+    void RotateTowardsTarget()
+    {
+        // Calculate the direction from the camera to the target
+        Vector3 directionToTarget = cameraTarget.position - transform.position;
+        Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
+
+        // Smoothly rotate the camera towards the target
+        transform.rotation = Quaternion.Slerp(transform.rotation, (targetRotation), rotationSpeed * Time.deltaTime);
+    }
+
     // New Method: Rotate around the player and use LookAt to keep the player in focus
+    /* old rotation method
     void RotateAndLookAtPlayer()
     {
         // Clamp the vertical rotation to prevent flipping
@@ -130,13 +139,46 @@ public class CameraFollowTarget : MonoBehaviour
         Quaternion rotation = Quaternion.Euler(verticalRotation, horizontalRotation, 0);
 
         // Use the player's position plus the static offset for positioning the camera
-        Vector3 newPosition = player.position + additionalOffset;  // Use the offset as a static position offset
+        //Vector3 newPosition = player.position + additionalOffset;  // Use the offset as a static position offset
+        Vector3 newPosition = new Vector3(player.position.x + additionalOffset.x, transform.position.y, transform.position.y + additionalOffset.z);  // Use the offset as a static position offset
+
+        Vector3 lookAtPosition = cameraTarget.position + LookatOffset;
 
         // Apply the new position to the camera (with static offset)
         transform.position = newPosition;
 
         // Make sure the camera always looks at the player
-        transform.LookAt(player);
+        //transform.LookAt(player);
+        transform.LookAt(lookAtPosition);
     }
+    */
+    void RotateAndLookAtPlayer()
+    {
+        // Clamp the vertical rotation to prevent flipping
+        verticalRotation = Mathf.Clamp(verticalRotation, -verticalRotationLimit, verticalRotationLimit);
+
+        // Calculate the new rotation target based on the vertical and horizontal rotation
+        Quaternion targetRotation = Quaternion.Euler(verticalRotation, horizontalRotation, 0);
+
+        // Use the player's position plus the static offset for positioning the camera
+        Vector3 newPosition = new Vector3(player.position.x + additionalOffset.x, transform.position.y, transform.position.y + additionalOffset.z);  // Use the offset as a static position offset
+
+        // Calculate the look at position (with the additional offset)
+        Vector3 lookAtPosition = cameraTarget.position + LookatOffset;
+
+        // Apply the new position to the camera (with static offset)
+        transform.position = newPosition;
+
+        // Smoothly rotate the camera towards the target rotation
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+
+        // Make sure the camera always looks at the look-at position smoothly
+        Vector3 directionToLookAt = lookAtPosition - transform.position;
+        Quaternion lookAtRotation = Quaternion.LookRotation(directionToLookAt);
+
+        // Smoothly interpolate the camera's rotation towards the look-at target
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookAtRotation, Time.deltaTime * rotationSpeed);
+    }
+    
 
 }

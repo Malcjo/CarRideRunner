@@ -7,7 +7,12 @@ public class CameraTargetFollow : MonoBehaviour
     public float maxFollowSpeed = 0.3f;   // Maximum smoothing time for fast movement or jumping
     public Vector3 offset = new Vector3(0, 2, -10);  // Offset of the camera target relative to the player
     public float verticalDelay = 1.2f;
-    public float HorizontalDelay = 5f;
+    public float horizontalDelay = 5f;
+
+    // New variables for controlling subtle vertical follow
+    public float verticalSmoothingSpeed = 0.05f;  // Speed for subtle vertical follow
+    public float verticalThreshold = 0.2f;  // Minimum movement in the Y-axis before following
+    private float targetYPosition;  // Target Y position for subtle vertical follow
 
     private Vector3 velocity = Vector3.zero;  // Reference for smooth damping
     private Rigidbody playerRb;  // To get the player's speed
@@ -21,6 +26,7 @@ public class CameraTargetFollow : MonoBehaviour
     {
         playerRb = player.GetComponent<Rigidbody>();
         currentFollowSpeed = minFollowSpeed;  // Start with minimal delay
+        targetYPosition = transform.position.y;  // Set the initial target Y position
     }
 
     void FixedUpdate()
@@ -47,8 +53,17 @@ public class CameraTargetFollow : MonoBehaviour
         else
         {
             // Smoothly reduce the follow delay back to the minimal value when the player is on the ground
-            currentFollowSpeed = Mathf.Lerp(currentFollowSpeed, minFollowSpeed, Time.deltaTime * HorizontalDelay);
+            currentFollowSpeed = Mathf.Lerp(currentFollowSpeed, minFollowSpeed, Time.deltaTime * horizontalDelay);
         }
+
+        // Handle subtle vertical movement
+        if (Mathf.Abs(player.position.y - targetYPosition) > verticalThreshold)
+        {
+            targetYPosition = Mathf.Lerp(targetYPosition, player.position.y + offset.y, verticalSmoothingSpeed);
+        }
+
+        // Apply the target Y position to the follow object
+        targetPosition.y = targetYPosition;
 
         // Smoothly move the CameraTarget towards the target position
         transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, currentFollowSpeed);
