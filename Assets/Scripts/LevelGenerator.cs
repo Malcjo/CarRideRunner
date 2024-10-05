@@ -46,7 +46,7 @@ public class LevelGenerator : MonoBehaviour
     public Transform player;
     public float spawnDistance = 20f;
     public float platformLength = 10f;
-    private float nextSpawnX = 0f;
+    [SerializeField]private float nextSpawnX = 0f;
 
     private bool startRandomSpawn = false;
     private Queue<GameObject> spawnedPlatforms = new Queue<GameObject>();
@@ -90,10 +90,12 @@ public class LevelGenerator : MonoBehaviour
         // Clean up old platforms
         if (spawnedPlatforms.Count > 0)
         {
+            
             GameObject oldestPlatform = spawnedPlatforms.Peek();
-            if (player.position.x - nextSpawnX > oldestPlatform.transform.position.x)
+
+            if (player.position.x - oldestPlatform.transform.position.x > spawnDistance)
             {
-                DestroyPlatform();
+                DestroyPlatform();  // Destroy the oldest platform if it is far enough behind the player
             }
         }
     }
