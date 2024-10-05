@@ -1,11 +1,22 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem;  // New Input System
+using UnityEngine.InputSystem;
+using System.Collections;  // New Input System
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 5f;   // Horizontal movement speed
+    public float maxSpeed = 10f;    // Maximum speed the player can reach
+    public float initialSpeed = 3f; // Initial speed at the start of the level
+    public float obstacleSpeedReduction = 2f; // Speed reduction when hitting an obstacle
+    public float speedIncreaseRate = 0.5f;  // How fast the player increases speed to max
+    public float speedDecreaseRate = 0.1f;  // How fast the player's speed decreases after exceeding maxSpeed
+    private float currentSpeed;     // Current running speed
+
+    private bool isRecentlyHit = false;  // Track if the player was recently hit
+    public float recentlyHitDuration = 2f;  // Time window before `isRecentlyHit` is set to false again
+
+
+
     public float jumpForce = 10f;  // Initial jump force
     public float maxJumpTime = 0.3f;  // Maximum time the player can hold the jump button to extend the jump
     public float fallMultiplier = 4f;  // Increases gravity when falling
@@ -51,6 +62,8 @@ public class PlayerController : MonoBehaviour
     private PlayerControls controls;  // Reference to the new Input System controls
     private bool isJumpButtonHeld = false;  // Track if jump button is being held
 
+
+
     private void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
@@ -86,6 +99,8 @@ public class PlayerController : MonoBehaviour
             /*
             HandleJumpOldInput();  // Call the old input system's jump logic (if needed)
             */
+            AdjustPlayersSpeed();
+
         }
     }
 
@@ -112,6 +127,24 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // adjust players speed
+    private void AdjustPlayersSpeed()
+    {
+        // Increase the player's current speed up to the max speed
+        if (currentSpeed < maxSpeed)
+        {
+            currentSpeed += speedIncreaseRate * Time.deltaTime;
+        }
+
+        // If the current speed exceeds the maxSpeed, reduce it gradually
+        if (currentSpeed > maxSpeed)
+        {
+            currentSpeed -= speedDecreaseRate * Time.deltaTime;
+        }
+
+    }
+
+
     // Input System Binding
     private void BindInputActions()
     {
@@ -126,6 +159,7 @@ public class PlayerController : MonoBehaviour
         animator = GetComponentInChildren<Animator>();  // Reference the Animator in the child object
         cameraShake = cam.GetComponent<CameraShake>();
         isAlive = true;
+        currentSpeed = initialSpeed;  // Set initial speed
         transform.position = startingPosition.transform.position;
     }
 
@@ -167,18 +201,18 @@ public class PlayerController : MonoBehaviour
         {
             // Move along the slope
             Vector3 slopeMoveDirection = Vector3.ProjectOnPlane(transform.forward, slopeNormal).normalized;
-            rb.velocity = slopeMoveDirection * moveSpeed + new Vector3(0, rb.velocity.y, 0);  // Preserve Y velocity for jumping
+            rb.velocity = slopeMoveDirection * currentSpeed + new Vector3(0, rb.velocity.y, 0);  // Preserve Y velocity for jumping
         }
         else
         {
             // Normal horizontal movement
-            rb.velocity = new Vector3(moveSpeed, rb.velocity.y, 0);
+            rb.velocity = new Vector3(currentSpeed, rb.velocity.y, 0);
         }
     }
 
     public float GetSpeed()
     {
-        return moveSpeed;
+        return currentSpeed;
     }
 
     // Handle Jumping Logic
@@ -327,7 +361,7 @@ public class PlayerController : MonoBehaviour
     private void HandleAnimations()
     {
         // Set animator parameters based on player state
-        animator.SetFloat("Speed", Mathf.Abs(moveSpeed));
+        animator.SetFloat("Speed", Mathf.Abs(currentSpeed));
 
         // Update grounded, jumping, and falling states
         animator.SetBool("isGrounded", isGrounded);
@@ -363,10 +397,19 @@ public class PlayerController : MonoBehaviour
     // Handle collisions with obstacles
     private void OnCollisionEnter(Collision collision)
     {
+
+
         if (collision.gameObject.CompareTag("Killbox"))
         {
-            StartCoroutine(HandlePlayerHitObstacle());
+            StartCoroutine(HandlePlayerDeath());
         }
+    }
+
+    // Coroutine to reset the `isRecentlyHit` flag after a few seconds
+    private IEnumerator ResetRecentlyHit()
+    {
+        yield return new WaitForSeconds(recentlyHitDuration);
+        isRecentlyHit = false;
     }
 
     //handle triggers
@@ -379,13 +422,27 @@ public class PlayerController : MonoBehaviour
                 Debug.Log("Start Spawning");
                 levelmanager.GetComponent<LevelGenerator>().StartSpawning();
             }
+            if (other.CompareTag("Obstacle"))
+            {
+                if (isRecentlyHit)
+                {
+                    StartCoroutine(HandlePlayerDeath());  // Player dies if hit again while `isRecentlyHit` is true
+                }
+                else
+                {
+                    // Player is hit but doesn't die
+                    isRecentlyHit = true;
+                    currentSpeed = Mathf.Max(currentSpeed - obstacleSpeedReduction, 0);  // Reduce the player's speed
+                    StartCoroutine(ResetRecentlyHit());
+                }
+            }
         }
 
     }
 
 
     // Coroutine for Player death
-    private IEnumerator HandlePlayerHitObstacle()
+    private IEnumerator HandlePlayerDeath()
     {
         gameManager.PlayerDied();
         isAlive = false;

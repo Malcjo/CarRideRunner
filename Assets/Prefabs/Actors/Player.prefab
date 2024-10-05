@@ -77,13 +77,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 876bf488620e781429e89e40126e3d43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 10
+  maxSpeed: 10
+  initialSpeed: 3
+  obstacleSpeedReduction: 2
+  speedIncreaseRate: 0.5
+  speedDecreaseRate: 0.1
+  recentlyHitDuration: 2
   jumpForce: 20
   maxJumpTime: 0.22
   fallMultiplier: 8
   lowJumpMultiplier: 10
   slopeLimit: 45
   slopeCheckDistance: 0.5
+  gameManager: {fileID: 0}
+  isGrounded: 0
   groundCheck: {fileID: 8344593236594690013}
   groundCheckRadius: 0.4
   groundLayer:
@@ -94,6 +101,10 @@ MonoBehaviour:
   cam: {fileID: 0}
   playerVisual: {fileID: 0}
   isAlive: 1
+  isJumping: 0
+  isFalling: 0
+  wasGrounded: 1
+  jumpTimeCounter: 0
   coyoteTime: 0.1
   jumpBufferTime: 0.1
   fallVelocityThreshold: -8

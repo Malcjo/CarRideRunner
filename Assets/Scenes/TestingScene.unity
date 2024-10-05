@@ -392,8 +392,10 @@ MonoBehaviour:
     - difficulty:
         standardPieces:
         - {fileID: 4921070828545585588, guid: ef45ad61ac9751c478e2008727ff25bc, type: 3}
+        - {fileID: 4921070828545585588, guid: 370f6c0e3f9b80744b510d7e18d6d5db, type: 3}
         easySpecialPieces:
         - {fileID: 4921070828545585588, guid: ef45ad61ac9751c478e2008727ff25bc, type: 3}
+        - {fileID: 4921070828545585588, guid: 370f6c0e3f9b80744b510d7e18d6d5db, type: 3}
         toughSpecialPieces:
         - {fileID: 4921070828545585588, guid: ef45ad61ac9751c478e2008727ff25bc, type: 3}
         hardestSpecialPieces:
@@ -423,6 +425,7 @@ MonoBehaviour:
   player: {fileID: 478672042}
   spawnDistance: 120
   platformLength: 30
+  nextSpawnX: 0
 --- !u!4 &346034789
 Transform:
   m_ObjectHideFlags: 0
@@ -435,7 +438,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &450583635
 GameObject:
@@ -791,7 +794,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!4 &786146089 stripped
 Transform:
@@ -1062,11 +1065,12 @@ MonoBehaviour:
   maxSpeed: 20
   enableDynamicZoom: 0
   enableRotationInsteadOfZoom: 1
-  rotationSpeed: 50
+  rotationSpeed: 10
   verticalRotationLimit: 80
   horizontalRotationSpeed: 100
   verticalRotationSpeed: 50
-  additionalOffset: {x: 0, y: -9.4, z: -34.54}
+  additionalOffset: {x: 0, y: -10, z: -30.2}
+  LookatOffset: {x: 0, y: -5.5, z: 0}
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1110,7 +1114,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1104457264
 MonoBehaviour:
@@ -1127,9 +1131,11 @@ MonoBehaviour:
   player: {fileID: 478672042}
   minFollowSpeed: 0.05
   maxFollowSpeed: 0.3
-  offset: {x: 0, y: 2, z: -10}
+  offset: {x: 3, y: 2, z: -10}
   verticalDelay: 1.2
-  HorizontalDelay: 3
+  horizontalDelay: 5
+  verticalSmoothingSpeed: 0.05
+  verticalThreshold: 0.2
   enableCameraFollow: 1
 --- !u!1 &1292414115
 GameObject:
@@ -1582,7 +1588,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8344593236271699371, guid: 6f46c4f62d3b720458feaacac769ebb1, type: 3}
       propertyPath: m_RootOrder
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8344593236271699371, guid: 6f46c4f62d3b720458feaacac769ebb1, type: 3}
       propertyPath: m_LocalPosition.x
